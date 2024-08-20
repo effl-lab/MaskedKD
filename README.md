@@ -8,6 +8,13 @@ This is the official implementation of a paper titled "The Role of Masking for E
 Seungwoo Son, Jegwang Ryu, Namhoon Lee, Jaeho Lee <br>
 Pohang University of Science and Technology (POSTECH)
 
+## Summary
+Our method, MaskedKD, reduces supervision cost by masking teacher ViT input based on student attention, maintaining student accuracy while saving computation.
+
+<center>
+<img src="./materials/maskedkd_main_figures.png"  style="zoom: 15%;"/>
+</center>
+
 ## Installation
 Since we have implemeneted on DeiT and MAE's official code, just following MAE's [guideline](https://github.com/facebookresearch/mae).
 
