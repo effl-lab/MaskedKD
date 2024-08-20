@@ -2,7 +2,7 @@
 
 This is the official implementation of a paper titled "The Role of Masking for Efficient Supervised Knowledge Distillation of Vision Transformers (ECCV 2024)"
 
-[Paper](https://arxiv.org/abs/2302.10494) | [Project page](https://maskedkd.github.io/)
+[### Paper](https://arxiv.org/abs/2302.10494) | [### Project page](https://maskedkd.github.io/)
 
 ## Installation
 Since we have implemeneted on DeiT and MAE's official code, just following MAE's [guideline](https://github.com/facebookresearch/mae).
