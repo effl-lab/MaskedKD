@@ -1,11 +1,8 @@
 # Official Code
 
-### [Paper](https://arxiv.org/abs/2302.10494) | [Project page](https://maskedkd.github.io/)
-
-<br>
-
 This is the official implementation of a paper titled "The Role of Masking for Efficient Supervised Knowledge Distillation of Vision Transformers (ECCV 2024)"
 
+### [Paper](https://arxiv.org/abs/2302.10494) | [Project page](https://maskedkd.github.io/)
 
 Seungwoo Son, Jegwang Ryu, Namhoon Lee, Jaeho Lee <br><br>
 Pohang University of Science and Technology (POSTECH)
