@@ -4,9 +4,7 @@ This is the official implementation of a paper titled "The Role of Masking for E
 
 ### [Paper](https://arxiv.org/abs/2302.10494) | [Project page](https://maskedkd.github.io/)
 
-
-
-
+<br>
 Seungwoo Son, Jegwang Ryu, Namhoon Lee, Jaeho Lee <br><br>
 Pohang University of Science and Technology (POSTECH)
 
