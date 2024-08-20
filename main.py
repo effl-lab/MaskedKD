@@ -109,8 +109,8 @@ def get_args_parser():
     parser.add_argument('--src', action='store_true') #simple random crop
     
     # * Random Erase params
-    parser.add_argument('--reprob', type=float, default=0.0, metavar='PCT',
-                        help='Random erase prob (default: 0.0)')
+    parser.add_argument('--reprob', type=float, default=0.25, metavar='PCT',
+                        help='Random erase prob (default: 0.25)')
     parser.add_argument('--remode', type=str, default='pixel',
                         help='Random erase mode (default: "pixel")')
     parser.add_argument('--recount', type=int, default=1,
