@@ -5,9 +5,20 @@ from torchvision import transforms
 
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD, DEFAULT_CROP_PCT
 from timm.data.auto_augment import rand_augment_transform, augment_and_mix_transform, auto_augment_transform
-from timm.data.transforms import _pil_interp, RandomResizedCropAndInterpolation, ToNumpy, ToTensor
+from timm.data.transforms import RandomResizedCropAndInterpolation, ToNumpy, ToTensor
 from timm.data.random_erasing import RandomErasing
+from PIL import Image
 
+def _pil_interp(method):
+    if method == 'bicubic':
+        return Image.BICUBIC
+    elif method == 'lanczos':
+        return Image.LANCZOS
+    elif method == 'hamming':
+        return Image.HAMMING
+    else:
+        # default bilinear, do we want to allow nearest?
+        return Image.BILINEAR
 
 def transforms_noaug_train(
         img_size=224,
