@@ -15,6 +15,10 @@ from timm.scheduler import create_scheduler
 from timm.optim import create_optimizer
 from timm.utils import get_state_dict, ModelEma
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from .gaudi_utils.timm_cuda import NativeScaler
 
 from datasets import build_dataset
@@ -26,9 +30,6 @@ import models_student
 from models_teacher import deit_small_patch16_224, deit_base_patch16_224
 from deit3 import deit_small_patch16_LS, deit_base_patch16_LS, deit_large_patch16_LS
 
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 def get_args_parser():
     parser = argparse.ArgumentParser('The Role of Masking for Supervised ViT Distillation training and evaluation script', add_help=False)
