@@ -15,11 +15,7 @@ from timm.scheduler import create_scheduler
 from timm.optim import create_optimizer
 from timm.utils import get_state_dict, ModelEma
 
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-from .gaudi_utils.timm_cuda import NativeScaler
+from gaudi_utils.timm_cuda import NativeScaler
 
 from datasets import build_dataset
 from engine import train_one_epoch, evaluate
