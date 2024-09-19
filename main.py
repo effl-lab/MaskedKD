@@ -246,7 +246,7 @@ def main(args):
         drop_path_rate=args.drop_path
         )    
             
-    model.to(device)
+    model = model.to(device)
 
     model_without_ddp = model
     if args.distributed:
@@ -288,7 +288,7 @@ def main(args):
         print("no model")
         return
 
-    teacher_model.to(device)
+    teacher_model = teacher_model.to(device)
     teacher_model.eval()
 
     criterion = DistillationLoss(
