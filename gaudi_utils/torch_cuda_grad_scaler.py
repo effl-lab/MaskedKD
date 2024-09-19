@@ -169,7 +169,7 @@ class GradScaler(object):
 
         # Short-circuit for the common case.
         if isinstance(outputs, torch.Tensor):
-            # assert outputs.is_cuda or outputs.device.type == 'xla' # or outputs.device.type == 'hpu' 안됨
+            assert outputs.is_cuda or outputs.device.type == 'xla' or outputs.device.type == 'hpu'
             if self._scale is None:
                 self._lazy_init_scale_growth_tracker(outputs.device)
             assert self._scale is not None
@@ -180,7 +180,7 @@ class GradScaler(object):
 
         def apply_scale(val):
             if isinstance(val, torch.Tensor):
-                # assert val.is_cuda or val.device.type == 'xla' # or val.device.type == 'hpu'
+                assert val.is_cuda or val.device.type == 'xla' or val.device.type == 'hpu'
                 if len(stash) == 0:
                     if self._scale is None:
                         self._lazy_init_scale_growth_tracker(val.device)
