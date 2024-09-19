@@ -319,13 +319,13 @@ def main(args):
         if args.distributed:
             data_loader_train.sampler.set_epoch(epoch)
         # import ipdb; ipdb.set_trace()
-        # train_stats = train_one_epoch(
-        #     model, criterion, data_loader_train,
-        #     optimizer, device, epoch, loss_scaler,
-        #     args.clip_grad, mixup_fn,
-        #     set_training_mode=args.train_mode,  # keep in eval mode for deit finetuning / train mode for training and deit III finetuning
-        #     args = args,
-        # )
+        train_stats = train_one_epoch(
+            model, criterion, data_loader_train,
+            optimizer, device, epoch, loss_scaler,
+            args.clip_grad, mixup_fn,
+            set_training_mode=args.train_mode,  # keep in eval mode for deit finetuning / train mode for training and deit III finetuning
+            args = args,
+        )
 
         lr_scheduler.step(epoch)
         if args.output_dir:
