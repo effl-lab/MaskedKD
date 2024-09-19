@@ -230,7 +230,6 @@ def main(args):
         pin_memory=args.pin_mem,
         drop_last=False
     )
-    # import ipdb; ipdb.set_trace()
 
     mixup_fn = None
     mixup_active = args.mixup > 0 or args.cutmix > 0. or args.cutmix_minmax is not None
@@ -246,6 +245,7 @@ def main(args):
         drop_rate=args.drop,
         drop_path_rate=args.drop_path
         )    
+    import ipdb; ipdb.set_trace()
     model = model.to(device)
 
     model_without_ddp = model
