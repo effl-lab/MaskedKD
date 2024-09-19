@@ -8,8 +8,8 @@ from typing import Any, Dict, List, Optional, Tuple
 from importlib.util import find_spec
 
 def amp_definitely_not_available():
-    return not (torch.cuda.is_available() or find_spec('torch_xla') or find_spec('hpu'))
-
+    # return not (torch.cuda.is_available() or find_spec('torch_xla') or find_spec('hpu'))
+    return False
 
 __all__ = ["OptState", "GradScaler"]
 
