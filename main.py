@@ -245,7 +245,7 @@ def main(args):
         drop_rate=args.drop,
         drop_path_rate=args.drop_path
         )    
-    import ipdb; ipdb.set_trace()
+    # import ipdb; ipdb.set_trace()
     model = model.to(device)
 
     model_without_ddp = model

@@ -49,10 +49,14 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
 
         optimizer.zero_grad()
 
-        # this attribute is added by timm on one optimizer (adahessian)
-        is_second_order = hasattr(optimizer, 'is_second_order') and optimizer.is_second_order
-        loss_scaler(loss, optimizer, clip_grad=max_norm,
-                    parameters=model.parameters(), create_graph=is_second_order)
+        # # this attribute is added by timm on one optimizer (adahessian)
+        # is_second_order = hasattr(optimizer, 'is_second_order') and optimizer.is_second_order
+        # loss_scaler(loss, optimizer, clip_grad=max_norm,
+        #             parameters=model.parameters(), create_graph=is_second_order)
+        loss.backward()
+        htcore.mark_step()
+        optimizer.step()
+        htcore.mark_step()
 
         # torch.cuda.synchronize()
 

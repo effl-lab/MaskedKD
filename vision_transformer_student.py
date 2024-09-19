@@ -268,7 +268,7 @@ class VisionTransformer(nn.Module):
         x = self.pos_drop(x)
 
         for i, blk in enumerate(self.blocks):
-            print(f'{i}-th layer, device: {x.device}')
+            # print(f'{i}-th layer, device: {x.device}')
             if i < len(self.blocks) - 1:
                 x = blk(x)
             else:
