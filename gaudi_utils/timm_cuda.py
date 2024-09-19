@@ -3,6 +3,7 @@
 Hacked together by / Copyright 2020 Ross Wightman
 """
 import torch
+import habana_frameworks.torch.gpu_migration
 import habana_frameworks.torch.core as htcore
 from .torch_cuda_grad_scaler import *
 

@@ -13,6 +13,8 @@ from timm.utils import accuracy, ModelEma
 from losses import DistillationLoss
 import utils
 
+import habana_frameworks.torch.gpu_migration
+import habana_frameworks.torch.core as htcore
 
 def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,

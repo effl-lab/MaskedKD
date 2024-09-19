@@ -7,6 +7,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from importlib.util import find_spec
 
+import habana_frameworks.torch.gpu_migration
+import habana_frameworks.torch.core as htcore
+
 def amp_definitely_not_available():
     # return not (torch.cuda.is_available() or find_spec('torch_xla') or find_spec('hpu'))
     return False

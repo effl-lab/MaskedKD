@@ -26,6 +26,8 @@ import models_student
 from models_teacher import deit_small_patch16_224, deit_base_patch16_224
 from deit3 import deit_small_patch16_LS, deit_base_patch16_LS, deit_large_patch16_LS
 
+import habana_frameworks.torch.gpu_migration
+import habana_frameworks.torch.core as htcore
 
 def get_args_parser():
     parser = argparse.ArgumentParser('The Role of Masking for Supervised ViT Distillation training and evaluation script', add_help=False)
