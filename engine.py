@@ -24,7 +24,6 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
     header = 'Epoch: [{}]'.format(epoch)
     print_freq = 10
-    import ipdb; ipdb.set_trace()
 
     for samples, targets in metric_logger.log_every(data_loader, print_freq, header):
         samples = samples.to(device, non_blocking=True)
@@ -34,9 +33,11 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
             samples, targets = mixup_fn(samples, targets)
                                 
         # with torch.cuda.amp.autocast():
-        # with torch.autocast(device_type="hpu"):
-        outputs, attn = model(samples)            
-        loss  = criterion(samples, outputs, targets, attn)
+        import ipdb; ipdb.set_trace()
+
+        with torch.autocast(device_type=device):
+            outputs, attn = model(samples)            
+            loss  = criterion(samples, outputs, targets, attn)
 
         loss_value = loss.item()
 
@@ -77,7 +78,7 @@ def evaluate(data_loader, model, device):
 
         # compute output
         # with torch.cuda.amp.autocast():
-        with torch.autocast(device_type="hpu"):
+        with torch.autocast(device_type=device):
             output, _ = model(images)
             loss = criterion(output, target)
 
