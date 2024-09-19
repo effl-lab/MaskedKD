@@ -32,7 +32,8 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
         if mixup_fn is not None:
             samples, targets = mixup_fn(samples, targets)
                                 
-        with torch.cuda.amp.autocast():
+        # with torch.cuda.amp.autocast():
+        with torch.autocast(device_type="hpu"):
             outputs, attn = model(samples)            
             loss  = criterion(samples, outputs, targets, attn)
 
@@ -49,7 +50,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
         loss_scaler(loss, optimizer, clip_grad=max_norm,
                     parameters=model.parameters(), create_graph=is_second_order)
 
-        torch.cuda.synchronize()
+        # torch.cuda.synchronize()
 
         metric_logger.update(loss=loss_value)
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
@@ -74,7 +75,8 @@ def evaluate(data_loader, model, device):
         target = target.to(device, non_blocking=True)
 
         # compute output
-        with torch.cuda.amp.autocast():
+        # with torch.cuda.amp.autocast():
+        with torch.autocast(device_type="hpu"):
             output, _ = model(images)
             loss = criterion(output, target)
 
