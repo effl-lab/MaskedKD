@@ -5,7 +5,7 @@ Hacked together by / Copyright 2020 Ross Wightman
 import torch
 import habana_frameworks.torch.gpu_migration
 import habana_frameworks.torch.core as htcore
-# from .torch_cuda_grad_scaler import *
+from .torch_cuda_grad_scaler import *
 
 try:
     from apex import amp
@@ -50,8 +50,8 @@ class NativeScaler:
     state_dict_key = "amp_scaler"
 
     def __init__(self):
-        self._scaler = torch.cuda.amp.GradScaler()
-        # self._scaler = GradScaler()
+        # self._scaler = torch.cuda.amp.GradScaler()
+        self._scaler = GradScaler()
 
     def __call__(
             self,
