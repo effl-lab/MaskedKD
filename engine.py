@@ -24,6 +24,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
     header = 'Epoch: [{}]'.format(epoch)
     print_freq = 10
+    import ipdb; ipdb.set_trace()
 
     for samples, targets in metric_logger.log_every(data_loader, print_freq, header):
         samples = samples.to(device, non_blocking=True)
