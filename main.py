@@ -245,7 +245,7 @@ def main(args):
         drop_rate=args.drop,
         drop_path_rate=args.drop_path
         )    
-            
+    import ipdb; ipdb.set_trace()
     model = model.to(device)
 
     model_without_ddp = model
@@ -290,7 +290,6 @@ def main(args):
 
     teacher_model = teacher_model.to(device)
     teacher_model.eval()
-    import ipdb; ipdb.set_trace()
 
     criterion = DistillationLoss(
         criterion, teacher_model, args.distillation_type, args.distillation_alpha, args.distillation_tau, args.len_num_keep
