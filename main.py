@@ -252,8 +252,9 @@ def main(args):
         )  
     # model = wrap_in_hpu_graph(model)  
     # import ipdb; ipdb.set_trace()
+    model = timm.create_model(args.model, pretrained=True)
     model = model.to(device)
-
+    
     model_without_ddp = model
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
