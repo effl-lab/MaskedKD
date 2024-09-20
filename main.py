@@ -183,7 +183,7 @@ def main(args):
 
     print(args)
     device = torch.device(args.device)
-    adapt_transformers_to_gaudi()
+    # adapt_transformers_to_gaudi()
 
     # fix the seed for reproducibility
     seed = args.seed + utils.get_rank()
