@@ -29,7 +29,7 @@ from deit3 import deit_small_patch16_LS, deit_base_patch16_LS, deit_large_patch1
 import habana_frameworks.torch.gpu_migration
 import habana_frameworks.torch.core as htcore
 
-from optimum.habana.transformers.modeling_utils import adapt_transformers_to_gaudi
+# from optimum.habana.transformers.modeling_utils import adapt_transformers_to_gaudi
 # from habana_frameworks.torch.hpu import wrap_in_hpu_graph
 
 def get_args_parser():
