@@ -30,6 +30,7 @@ import habana_frameworks.torch.gpu_migration
 import habana_frameworks.torch.core as htcore
 
 from optimum.habana.transformers.modeling_utils import adapt_transformers_to_gaudi
+from habana_frameworks.torch.hpu import wrap_in_hpu_graph
 
 def get_args_parser():
     parser = argparse.ArgumentParser('The Role of Masking for Supervised ViT Distillation training and evaluation script', add_help=False)
@@ -182,7 +183,7 @@ def main(args):
     print(args)
     device = torch.device(args.device)
     adapt_transformers_to_gaudi()
-    
+
     # fix the seed for reproducibility
     seed = args.seed + utils.get_rank()
     torch.manual_seed(seed)
@@ -247,7 +248,8 @@ def main(args):
         num_classes=args.nb_classes,
         drop_rate=args.drop,
         drop_path_rate=args.drop_path
-        )    
+        )  
+    model = wrap_in_hpu_graph(model)  
     # import ipdb; ipdb.set_trace()
     model = model.to(device)
 
@@ -290,7 +292,7 @@ def main(args):
     else :
         print("no model")
         return
-
+    teacher_model = wrap_in_hpu_graph(teacher_model)
     teacher_model = teacher_model.to(device)
     teacher_model.eval()
 
