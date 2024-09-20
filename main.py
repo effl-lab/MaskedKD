@@ -29,6 +29,8 @@ from deit3 import deit_small_patch16_LS, deit_base_patch16_LS, deit_large_patch1
 import habana_frameworks.torch.gpu_migration
 import habana_frameworks.torch.core as htcore
 
+from optimum.habana.transformers.modeling_utils import adapt_transformers_to_gaudi
+
 def get_args_parser():
     parser = argparse.ArgumentParser('The Role of Masking for Supervised ViT Distillation training and evaluation script', add_help=False)
     parser.add_argument('--teacher_model', default='deit3_small', type=str, metavar='MODEL',
@@ -179,7 +181,8 @@ def main(args):
 
     print(args)
     device = torch.device(args.device)
-
+    adapt_transformers_to_gaudi()
+    
     # fix the seed for reproducibility
     seed = args.seed + utils.get_rank()
     torch.manual_seed(seed)
