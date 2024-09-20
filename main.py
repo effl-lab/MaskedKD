@@ -17,7 +17,7 @@ from timm.utils import get_state_dict, ModelEma
 
 from gaudi_utils.timm_cuda import NativeScaler
 
-from datasets import build_dataset
+from datasets_ import build_dataset
 from engine import train_one_epoch, evaluate
 from losses import DistillationLoss
 from samplers import RASampler
