@@ -40,7 +40,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
         with torch.autocast(device_type="hpu"):
             outputs, attn = model(samples)            
             loss  = criterion(samples, outputs, targets, attn)
-
+        print(outputs.shape)
         # loss_value = loss.item()
 
         # if not math.isfinite(loss_value):
