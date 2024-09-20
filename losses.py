@@ -45,3 +45,26 @@ class DistillationLoss(torch.nn.Module):
 
 
         return loss
+
+
+
+class Loss(torch.nn.Module):
+    """
+    This module wraps a standard criterion and adds an extra knowledge distillation loss by
+    taking a teacher model prediction and using it as additional supervision.
+    """
+    def __init__(self, base_criterion: torch.nn.Module, teacher_model: torch.nn.Module,
+                 distillation_type: str, alpha: float, tau: float, len_num_keep):
+        super().__init__()
+        self.base_criterion = base_criterion
+        self.teacher_model = teacher_model
+        assert distillation_type in ['none', 'soft', 'hard']
+        self.distillation_type = distillation_type
+        self.alpha = alpha
+        self.tau = tau
+        self.len_num_keep = len_num_keep            
+
+    def forward(self, inputs, outputs, labels, attn):
+        base_loss = self.base_criterion(outputs, labels)
+        loss = base_loss
+        return loss

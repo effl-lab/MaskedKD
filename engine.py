@@ -38,7 +38,9 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
         # import ipdb; ipdb.set_trace()
 
         with torch.autocast(device_type="hpu"):
-            outputs, attn = model(samples)            
+            # outputs, attn = model(samples)            
+            outputs = model(samples)         
+            attn = None   
             loss  = criterion(samples, outputs, targets, attn)
         print(outputs.shape)
         # loss_value = loss.item()

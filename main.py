@@ -20,6 +20,7 @@ from gaudi_utils.timm_cuda import NativeScaler
 from datasets_my import build_dataset
 from engine import train_one_epoch, evaluate
 from losses import DistillationLoss
+from losses import Loss
 from samplers import RASampler
 import utils
 import models_student
@@ -299,7 +300,11 @@ def main(args):
     teacher_model = teacher_model.to(device)
     teacher_model.eval()
 
-    criterion = DistillationLoss(
+    # criterion = DistillationLoss(
+    #     criterion, teacher_model, args.distillation_type, args.distillation_alpha, args.distillation_tau, args.len_num_keep
+    # )
+
+    criterion = Loss(
         criterion, teacher_model, args.distillation_type, args.distillation_alpha, args.distillation_tau, args.len_num_keep
     )
 
