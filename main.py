@@ -252,6 +252,7 @@ def main(args):
         )  
     # model = wrap_in_hpu_graph(model)  
     # import ipdb; ipdb.set_trace()
+    import timm
     model = timm.create_model(args.model, pretrained=True)
     model = model.to(device)
     
