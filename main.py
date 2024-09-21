@@ -248,7 +248,7 @@ def main(args):
             label_smoothing=args.smoothing, num_classes=args.nb_classes)
 
     print(f"Creating model: {args.model}")
-    model = vision_transformer_student.__dict__[args.model](
+    model = models_student.__dict__[args.model](
         num_classes=args.nb_classes,
         drop_rate=args.drop,
         drop_path_rate=args.drop_path
@@ -258,6 +258,7 @@ def main(args):
     import timm
     # model = timm.create_model("timm/fastvit_t8.apple_in1k", pretrained=True)
     # model = timm.create_model(args.model, pretrained=True)
+    model = timm.create_model('vit_base_patch16_224', pretrained=True)
     model = model.to(device)
     
     model_without_ddp = model
