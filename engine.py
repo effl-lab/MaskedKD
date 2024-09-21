@@ -38,9 +38,9 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
         # import ipdb; ipdb.set_trace()
 
         with torch.autocast(device_type="hpu"):
-            # outputs, attn = model(samples)            
-            outputs = model(samples)         
-            attn = None   
+            outputs, attn = model(samples)            
+            # outputs = model(samples)         
+            # attn = None   
             loss  = criterion(samples, outputs, targets, attn)
         print("output: " , outputs.shape, outputs.device)
         print("loss: " , loss.shape, loss.device)
@@ -88,8 +88,8 @@ def evaluate(data_loader, model, device):
         # compute output
         # with torch.cuda.amp.autocast():
         with torch.autocast(device_type="hpu"):
-            # output, _ = model(images)
-            output = model(images)         
+            output, _ = model(images)
+            # output = model(images)         
             loss = criterion(output, target)
 
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
