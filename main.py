@@ -179,6 +179,7 @@ def get_args_parser():
 
 
 def main(args):
+    print("distributed : ", args.distributed)
     if args.distributed:
         utils.init_distributed_mode(args)
 
