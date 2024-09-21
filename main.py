@@ -256,7 +256,7 @@ def main(args):
     # import ipdb; ipdb.set_trace()
     import timm
     # model = timm.create_model("timm/fastvit_t8.apple_in1k", pretrained=True)
-    model = timm.create_model(args.model, pretrained=False)
+    model = timm.create_model(args.model, pretrained=True)
     model = model.to(device)
     
     model_without_ddp = model
