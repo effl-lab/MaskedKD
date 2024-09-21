@@ -42,7 +42,8 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
             outputs = model(samples)         
             attn = None   
             loss  = criterion(samples, outputs, targets, attn)
-        print(outputs.shape)
+        print("output: " , outputs.shape, outputs.device)
+        print("loss: " , loss.shape, loss.device)
         # loss_value = loss.item()
 
         # if not math.isfinite(loss_value):
