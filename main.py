@@ -34,6 +34,14 @@ from optimum.habana.transformers.modeling_utils import adapt_transformers_to_gau
 # from habana_frameworks.torch.hpu import wrap_in_hpu_graph
 import vision_transformer_student
 import habana_frameworks.torch as ht
+from transformers import (
+    MODEL_FOR_IMAGE_CLASSIFICATION_MAPPING,
+    AutoConfig,
+    AutoImageProcessor,
+    AutoModelForImageClassification,
+    HfArgumentParser,
+)
+import timm
 
 def get_args_parser():
     parser = argparse.ArgumentParser('The Role of Masking for Supervised ViT Distillation training and evaluation script', add_help=False)
@@ -178,6 +186,7 @@ def get_args_parser():
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
     parser.add_argument('--no_distributed', action='store_false', dest='distributed', help='')
     parser.add_argument('--no_distill', action='store_true')
+    parser.add_argument('--hf_model', action='store_true')
     return parser
 
 
@@ -250,18 +259,41 @@ def main(args):
             label_smoothing=args.smoothing, num_classes=args.nb_classes)
 
     print(f"Creating model: {args.model}")
-    # model = models_student.__dict__[args.model](
-    #     num_classes=args.nb_classes,
-    #     drop_rate=args.drop,
-    #     drop_path_rate=args.drop_path
-    #     )  
-    # model = wrap_in_hpu_graph(model)  
-    # import ipdb; ipdb.set_trace()
-    import timm
-    # model = timm.create_model("timm/fastvit_t8.apple_in1k", pretrained=False)
-    # model = timm.create_model(args.model, pretrained=True)
-    model = timm.create_model('vit_small_patch16_224', pretrained=False)
-    model = ht.hpu.wrap_in_hpu_graph(model)
+    if args.hf_model:
+        config = AutoConfig.from_pretrained(
+            args.model,
+            # num_labels=len(labels),
+            # label2id=label2id,
+            # id2label=id2label,
+            finetuning_task="image-classification",
+            # cache_dir=model_args.cache_dir,
+            # revision=model_args.model_revision,
+            # token=model_args.token,
+            trust_remote_code=True,
+        )
+        model = AutoModelForImageClassification.from_pretrained(
+            args.model,
+            # from_tf=bool(".ckpt" in model_args.model_name_or_path),
+            config=config,
+            # cache_dir=model_args.cache_dir,
+            # revision=model_args.model_revision,
+            # token=model_args.token,
+            trust_remote_code=True,
+            # ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
+        )
+    else :
+        # model = models_student.__dict__[args.model](
+        #     num_classes=args.nb_classes,
+        #     drop_rate=args.drop,
+        #     drop_path_rate=args.drop_path
+        #     )  
+        # model = wrap_in_hpu_graph(model)  
+        # import ipdb; ipdb.set_trace()
+        # model = timm.create_model("timm/fastvit_t8.apple_in1k", pretrained=False)
+        # model = timm.create_model(args.model, pretrained=True)
+        model = timm.create_model('vit_small_patch16_224', pretrained=False)
+        model = ht.hpu.wrap_in_hpu_graph(model)
+        
     model = model.to(device)
     
     model_without_ddp = model
