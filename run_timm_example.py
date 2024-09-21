@@ -64,7 +64,8 @@ if __name__ == "__main__":
 
     adapt_transformers_to_gaudi()
 
-    model = timm.create_model(args.model_name_or_path, pretrained=True)
+    # model = timm.create_model(args.model_name_or_path, pretrained=True)
+    model = timm.create_model(args.model_name_or_path, pretrained=False)
     model.to("hpu")
     model = model.eval()
     data_config = timm.data.resolve_model_data_config(model)
