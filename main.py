@@ -248,11 +248,11 @@ def main(args):
             label_smoothing=args.smoothing, num_classes=args.nb_classes)
 
     print(f"Creating model: {args.model}")
-    model = models_student.__dict__[args.model](
-        num_classes=args.nb_classes,
-        drop_rate=args.drop,
-        drop_path_rate=args.drop_path
-        )  
+    # model = models_student.__dict__[args.model](
+    #     num_classes=args.nb_classes,
+    #     drop_rate=args.drop,
+    #     drop_path_rate=args.drop_path
+    #     )  
     # model = wrap_in_hpu_graph(model)  
     # import ipdb; ipdb.set_trace()
     import timm
