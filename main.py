@@ -32,6 +32,7 @@ import habana_frameworks.torch.core as htcore
 
 from optimum.habana.transformers.modeling_utils import adapt_transformers_to_gaudi
 # from habana_frameworks.torch.hpu import wrap_in_hpu_graph
+import vision_transformer_student
 
 def get_args_parser():
     parser = argparse.ArgumentParser('The Role of Masking for Supervised ViT Distillation training and evaluation script', add_help=False)
@@ -247,7 +248,7 @@ def main(args):
             label_smoothing=args.smoothing, num_classes=args.nb_classes)
 
     print(f"Creating model: {args.model}")
-    model = models_student.__dict__[args.model](
+    model = vision_transformer_student.__dict__[args.model](
         num_classes=args.nb_classes,
         drop_rate=args.drop,
         drop_path_rate=args.drop_path
