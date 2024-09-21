@@ -14,7 +14,7 @@ python3 run_timm_example.py \
     --model_name_or_path "timm/fastvit_t8.apple_in1k" \
     --image_path "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png" \
     --warmup 3 \
-    --n_iterations 5000 \
+    --n_iterations 100 \
     --use_hpu_graphs \
     --bf16 \
     --print_result
@@ -23,7 +23,7 @@ python3 run_timm_example.py \
     --model_name_or_path "deit_tiny_patch16_224" \
     --image_path "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png" \
     --warmup 3 \
-    --n_iterations 5000 \
+    --n_iterations 100 \
     --use_hpu_graphs \
     --bf16 \
     --print_result
