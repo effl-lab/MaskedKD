@@ -258,7 +258,7 @@ def main(args):
     import timm
     # model = timm.create_model("timm/fastvit_t8.apple_in1k", pretrained=True)
     # model = timm.create_model(args.model, pretrained=True)
-    model = timm.create_model('vit_small_patch16_224', pretrained=True)
+    model = timm.create_model('vit_small_patch16_224', pretrained=False)
     model = model.to(device)
     
     model_without_ddp = model
