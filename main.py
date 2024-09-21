@@ -33,6 +33,7 @@ import habana_frameworks.torch.core as htcore
 from optimum.habana.transformers.modeling_utils import adapt_transformers_to_gaudi
 # from habana_frameworks.torch.hpu import wrap_in_hpu_graph
 import vision_transformer_student
+import habana_frameworks.torch as ht
 
 def get_args_parser():
     parser = argparse.ArgumentParser('The Role of Masking for Supervised ViT Distillation training and evaluation script', add_help=False)
@@ -176,6 +177,7 @@ def get_args_parser():
                         help='number of distributed processes')
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
     parser.add_argument('--no_distributed', action='store_false', dest='distributed', help='')
+    parser.add_argument('--no_distill', action='store_true')
     return parser
 
 
@@ -256,9 +258,10 @@ def main(args):
     # model = wrap_in_hpu_graph(model)  
     # import ipdb; ipdb.set_trace()
     import timm
-    model = timm.create_model("timm/fastvit_t8.apple_in1k", pretrained=False)
+    # model = timm.create_model("timm/fastvit_t8.apple_in1k", pretrained=False)
     # model = timm.create_model(args.model, pretrained=True)
-    # model = timm.create_model('vit_small_patch16_224', pretrained=False)
+    model = timm.create_model('vit_small_patch16_224', pretrained=False)
+    model = ht.hpu.wrap_in_hpu_graph(model)
     model = model.to(device)
     
     model_without_ddp = model
@@ -304,13 +307,14 @@ def main(args):
     teacher_model = teacher_model.to(device)
     teacher_model.eval()
 
-    # criterion = DistillationLoss(
-    #     criterion, teacher_model, args.distillation_type, args.distillation_alpha, args.distillation_tau, args.len_num_keep
-    # )
-
-    criterion = Loss(
-        criterion, teacher_model, args.distillation_type, args.distillation_alpha, args.distillation_tau, args.len_num_keep
-    )
+    if args.no_distill:
+        criterion = Loss(
+            criterion, teacher_model, args.distillation_type, args.distillation_alpha, args.distillation_tau, args.len_num_keep
+        )
+    else :
+        criterion = DistillationLoss(
+            criterion, teacher_model, args.distillation_type, args.distillation_alpha, args.distillation_tau, args.len_num_keep
+        )
 
     output_dir = Path(args.output_dir)
     if args.resume:
@@ -356,8 +360,6 @@ def main(args):
                     'scaler': loss_scaler.state_dict(),
                     'args': args,
                 }, checkpoint_path)
-             
-
         
         test_stats = evaluate(data_loader_val, model, device)
         print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
