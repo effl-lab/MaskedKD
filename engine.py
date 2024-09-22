@@ -15,6 +15,7 @@ import utils
 
 import habana_frameworks.torch.gpu_migration
 import habana_frameworks.torch.core as htcore
+import transformers
 
 def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,
@@ -42,6 +43,8 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
             attn = None 
             if isinstance(outputs, tuple):
                 outputs, attn = outputs
+            if isinstance(outputs, ImageClassifierOutput):
+                outputs = outputs.logit
             loss  = criterion(samples, outputs, targets, attn)
         print("output: " , outputs.shape, outputs.device)
         print("loss: " , loss.shape, loss.device)
