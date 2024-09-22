@@ -292,7 +292,7 @@ def main(args):
         model = timm.create_model("timm/fastvit_t8.apple_in1k", pretrained=False)
         # model = timm.create_model(args.model, pretrained=True)
         # model = timm.create_model('vit_small_patch16_224', pretrained=False)
-        model = ht.hpu.wrap_in_hpu_graph(model)
+        # model = ht.hpu.wrap_in_hpu_graph(model)
         
     model = model.to(device)
     
