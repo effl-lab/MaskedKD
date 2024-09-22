@@ -38,14 +38,14 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
         # with torch.cuda.amp.autocast():
         # import ipdb; ipdb.set_trace()
 
-        # with torch.autocast(device_type="hpu"):
-        outputs = model(samples)    
-        attn = None 
-        if isinstance(outputs, tuple):
-            outputs, attn = outputs
-        if isinstance(outputs, ImageClassifierOutput):
-            outputs = outputs.logits
-        loss  = criterion(samples, outputs, targets, attn)
+        with torch.autocast(device_type="hpu"):
+            outputs = model(samples)    
+            attn = None 
+            if isinstance(outputs, tuple):
+                outputs, attn = outputs
+            if isinstance(outputs, ImageClassifierOutput):
+                outputs = outputs.logits
+            loss  = criterion(samples, outputs, targets, attn)
 
         print("output: " , outputs.shape, outputs.device)
         print("loss: " , loss.shape, loss.device)
@@ -92,14 +92,14 @@ def evaluate(data_loader, model, device):
 
         # compute output
         # with torch.cuda.amp.autocast():
-        # with torch.autocast(device_type="hpu"):
-        output = model(images)    
-        if isinstance(output, tuple):
-            outputs, _ = outputs     
-        if isinstance(outputs, ImageClassifierOutput):
-            outputs = outputs.logits
-                
-            loss = criterion(output, target)
+        with torch.autocast(device_type="hpu"):
+            output = model(images)    
+            if isinstance(output, tuple):
+                output, _ = output     
+            if isinstance(output, ImageClassifierOutput):
+                output = output.logits
+                    
+                loss = criterion(output, target)
 
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
 
