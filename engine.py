@@ -15,7 +15,7 @@ import utils
 
 import habana_frameworks.torch.gpu_migration
 import habana_frameworks.torch.core as htcore
-import transformers.modeling_outputs.ImageClassifierOutput
+from transformers.modeling_outputs import ImageClassifierOutput
 
 def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,
