@@ -262,7 +262,7 @@ def main(args):
     if args.hf_model:
         config = AutoConfig.from_pretrained(
             args.model,
-            # num_labels=len(labels),
+            num_labels=1000,
             # label2id=label2id,
             # id2label=id2label,
             finetuning_task="image-classification",
