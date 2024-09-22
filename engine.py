@@ -44,7 +44,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
             if isinstance(outputs, tuple):
                 outputs, attn = outputs
             if isinstance(outputs, ImageClassifierOutput):
-                outputs = outputs.logit
+                outputs = outputs.logits
             loss  = criterion(samples, outputs, targets, attn)
         print("output: " , outputs.shape, outputs.device)
         print("loss: " , loss.shape, loss.device)
@@ -95,6 +95,8 @@ def evaluate(data_loader, model, device):
             output = model(images)    
             if isinstance(output, tuple):
                 outputs, _ = outputs     
+            if isinstance(outputs, ImageClassifierOutput):
+                outputs = outputs.logits
                 
             loss = criterion(output, target)
 
