@@ -10,12 +10,17 @@
 # --distillation-alpha 0.5 --distillation-tau 1  --input-size 224 --len_num_keep 98 \
 # --output_dir ./results | tee log_mask50.txt
 
-
-python main.py --no_distributed --no_distill --hf_model \
+python main.py --no_distributed --no_distill \
 --model google/vit-base-patch16-224-in21k  --teacher_model deit3_small --epochs 300 \
 --batch-size 1024 --data-path ../imagenet --distillation-type soft \
 --distillation-alpha 0.5 --distillation-tau 1  --input-size 224 --len_num_keep 98 \
 --output_dir ./results | tee log_mask50.txt
+
+# python main.py --no_distributed --no_distill --hf_model \
+# --model google/vit-base-patch16-224-in21k  --teacher_model deit3_small --epochs 300 \
+# --batch-size 1024 --data-path ../imagenet --distillation-type soft \
+# --distillation-alpha 0.5 --distillation-tau 1  --input-size 224 --len_num_keep 98 \
+# --output_dir ./results | tee log_mask50.txt
 
 # python3 run_timm_example.py \
 #     --model_name_or_path "timm/fastvit_t8.apple_in1k" \
