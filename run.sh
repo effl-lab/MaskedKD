@@ -1,8 +1,8 @@
-python -m torch.distributed.launch --nproc_per_node=4 --use_env main.py \
---model deit_tiny_patch16_224  --teacher_model deit3_small --epochs 300 \
---batch-size 256 --data-path ../imagenet --distillation-type soft \
---distillation-alpha 0.5 --distillation-tau 1  --input-size 224 --len_num_keep 98 \
---output_dir ./results | tee log_mask50.txt
+# python -m torch.distributed.launch --no_distill --nproc_per_node=4 --use_env main.py \
+# --model deit_tiny_patch16_224  --teacher_model deit3_small --epochs 300 \
+# --batch-size 256 --data-path ../imagenet --distillation-type soft \
+# --distillation-alpha 0.5 --distillation-tau 1  --input-size 224 --len_num_keep 98 \
+# --output_dir ./results | tee log_mask50.txt
 
 # python -m torch.distributed.launch --nproc_per_node=4 --use_env main.py \
 # --model vit_small_patch16_224  --teacher_model deit3_small --epochs 300 \
@@ -11,11 +11,11 @@ python -m torch.distributed.launch --nproc_per_node=4 --use_env main.py \
 # --output_dir ./results | tee log_mask50.txt
 
 
-# python main.py --no_distributed \
-# --model deit_tiny_patch16_224  --teacher_model deit3_small --epochs 300 \
-# --batch-size 1024 --data-path ../imagenet --distillation-type soft \
-# --distillation-alpha 0.5 --distillation-tau 1  --input-size 224 --len_num_keep 98 \
-# --output_dir ./results | tee log_mask50.txt
+python main.py --no_distributed --no_distill --hf_model \
+--model google/vit-base-patch16-224-in21k  --teacher_model deit3_small --epochs 300 \
+--batch-size 1024 --data-path ../imagenet --distillation-type soft \
+--distillation-alpha 0.5 --distillation-tau 1  --input-size 224 --len_num_keep 98 \
+--output_dir ./results | tee log_mask50.txt
 
 # python3 run_timm_example.py \
 #     --model_name_or_path "timm/fastvit_t8.apple_in1k" \
