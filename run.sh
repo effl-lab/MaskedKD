@@ -40,16 +40,14 @@ python3 run_timm_example.py \
     --bf16 \
     --print_result | tee run_timm_example.txt
 
-
-
-python3 run_timm_example.py \
-    --model_name_or_path "deit_tiny_patch16_224" \
-    --image_path "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png" \
-    --warmup 3 \
-    --n_iterations 100 \
-    --use_hpu_graphs \
-    --bf16 \
-    --print_result | tee -a run_timm_example.txt
+# python3 run_timm_example.py \
+#     --model_name_or_path "deit_tiny_patch16_224" \
+#     --image_path "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png" \
+#     --warmup 3 \
+#     --n_iterations 100 \
+#     --use_hpu_graphs \
+#     --bf16 \
+#     --print_result | tee -a run_timm_example.txt
 
 python3 run_timm_example.py \
     --model_name_or_path "deit_tiny_patch16_224" \

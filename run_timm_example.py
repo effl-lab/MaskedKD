@@ -112,6 +112,8 @@ if __name__ == "__main__":
             total_model_time = total_model_time + (model_end_time - model_start_time)
 
         if args.print_result:
+            if isinstance(outputs, tuple):
+                outputs, _ = outputs 
             top5_probabilities, top5_class_indices = torch.topk(outputs.softmax(dim=1) * 100, k=5)
             print("top5_class_indices: " + str(top5_class_indices.to("cpu").numpy()))
 
