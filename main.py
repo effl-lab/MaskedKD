@@ -43,7 +43,7 @@ from transformers import (
 )
 import timm
 import os
-# os.environ['PT_HPU_LAZY_MODE'] = '0'
+os.environ['PT_HPU_LAZY_MODE'] = '1'
 # os.environ['LOG_LEVEL_PT_FALLBACK'] = '1'
 # os.environ['PT_HPU_ENABLE_REFINE_DYNAMIC_SHAPES'] = '1'
 # os.environ['LOG_LEVEL_ALL'] = '3'
@@ -83,7 +83,7 @@ def get_args_parser():
                         help='Clip gradient norm (default: None, no clipping)')
     parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
                         help='SGD momentum (default: 0.9)')
-    parser.add_argument('--weight-decay', type=float, default=0.05,
+    parser.add_argument('--weight_decay', type=float, default=0.05,
                         help='weight decay (default: 0.05)')
     # Learning rate schedule parameters
     parser.add_argument('--sched', default='cosine', type=str, metavar='SCHEDULER',
@@ -193,6 +193,7 @@ def get_args_parser():
     parser.add_argument('--no_distributed', action='store_false', dest='distributed', help='')
     parser.add_argument('--no_distill', action='store_true')
     parser.add_argument('--hf_model', action='store_true')
+    parser.add_argument('--is_autocast', action='store_true')
     return parser
 
 
@@ -311,12 +312,33 @@ def main(args):
     if not args.unscale_lr:
         linear_scaled_lr = args.lr * args.batch_size * utils.get_world_size() / 512.0
         args.lr = linear_scaled_lr
-    optimizer = create_optimizer(args, model_without_ddp)
-    loss_scaler = NativeScaler()
+
+    # optimizer = create_optimizer(args, model_without_ddp)
+    # loss_scaler = NativeScaler()
 
     lr_scheduler, _ = create_scheduler(args, optimizer)
 
-    criterion = LabelSmoothingCrossEntropy()
+    # criterion = LabelSmoothingCrossEntropy()
+
+        # Prepare optimizer and scheduler
+    if (str(args.device) == 'hpu' and args.run_lazy_mode):
+        # use fused SGD for better performance
+        from habana_frameworks.torch.hpex.optimizers import FusedSGD
+        optimizer = FusedSGD(model.parameters(),
+                                lr=args.lr,
+                                momentum=0.9,
+                                weight_decay=args.weight_decay)
+    else:
+        optimizer = torch.optim.SGD(model.parameters(),
+                                lr=args.lr,
+                                momentum=0.9,
+                                weight_decay=args.weight_decay)
+        
+    t_total = args.num_steps
+    if args.decay_type == "cosine":
+        scheduler = WarmupCosineSchedule(optimizer, warmup_steps=args.warmup_steps, t_total=t_total)
+    else:
+        scheduler = WarmupLinearSchedule(optimizer, warmup_steps=args.warmup_steps, t_total=t_total)
 
     if mixup_active:
         # smoothing is handled with mixup label transform
@@ -399,7 +421,7 @@ def main(args):
                     'args': args,
                 }, checkpoint_path)
         
-        test_stats = evaluate(data_loader_val, model, device)
+        test_stats = evaluate(data_loader_val, model, device, args)
         print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
         
         
