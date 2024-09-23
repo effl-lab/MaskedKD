@@ -26,6 +26,8 @@ from PIL import Image
 
 from optimum.habana.transformers.modeling_utils import adapt_transformers_to_gaudi
 
+import models_student
+import models_teacher
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -57,6 +59,14 @@ if __name__ == "__main__":
         action="store_true",
         help="Whether to print the classification results.",
     )
+    parser.add_argument(
+        "--student_model,
+        action="store_true",
+    )
+    parser.add_argument(
+        "--teacher_model",
+        action="store_true",
+    )
     parser.add_argument("--warmup", type=int, default=3, help="Number of warmup iterations for benchmarking.")
     parser.add_argument("--n_iterations", type=int, default=5, help="Number of inference iterations for benchmarking.")
 
@@ -64,8 +74,13 @@ if __name__ == "__main__":
 
     adapt_transformers_to_gaudi()
 
-    # model = timm.create_model(args.model_name_or_path, pretrained=True)
-    model = timm.create_model(args.model_name_or_path, pretrained=False)
+    if arsg.student_model :
+        model = models_student.deit_tiny_patch16_224()
+    elif args.teacher_model :
+        model = models_teacher.deit_tiny_patch16_224()
+    else :
+        # model = timm.create_model(args.model_name_or_path, pretrained=True)
+        model = timm.create_model(args.model_name_or_path, pretrained=False)
     model.to("hpu")
     model = model.eval()
     data_config = timm.data.resolve_model_data_config(model)
@@ -82,8 +97,12 @@ if __name__ == "__main__":
     with torch.no_grad(), autocast:
         for i in range(args.warmup):
             inputs = transforms(img).unsqueeze(0).to("hpu")
+            if agrs.teacher_model:
+                outputs = model(inputs, )
+
             outputs = model(inputs)
             torch.hpu.synchronize()
+            # print(outputs.shape)
 
         total_model_time = 0
         for i in range(args.n_iterations):
@@ -91,6 +110,7 @@ if __name__ == "__main__":
             model_start_time = time.time()
             outputs = model(inputs)
             torch.hpu.synchronize()
+            # print(outputs.shape)
             model_end_time = time.time()
             total_model_time = total_model_time + (model_end_time - model_start_time)
 
