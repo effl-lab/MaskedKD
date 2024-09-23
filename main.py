@@ -42,6 +42,12 @@ from transformers import (
     HfArgumentParser,
 )
 import timm
+import os
+os.environ['PT_HPU_LAZY_MODE'] = '1'
+os.environ['LOG_LEVEL_PT_FALLBACK'] = '1'
+os.environ['PT_HPU_ENABLE_REFINE_DYNAMIC_SHAPES'] = '1'
+os.environ['LOG_LEVEL_ALL'] = '3'
+os.environ['ENABLE_CONSOLE'] = 'true'
 
 def get_args_parser():
     parser = argparse.ArgumentParser('The Role of Masking for Supervised ViT Distillation training and evaluation script', add_help=False)
