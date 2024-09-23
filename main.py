@@ -43,7 +43,7 @@ from transformers import (
 )
 import timm
 import os
-os.environ['PT_HPU_LAZY_MODE'] = '0'
+# os.environ['PT_HPU_LAZY_MODE'] = '0'
 # os.environ['LOG_LEVEL_PT_FALLBACK'] = '1'
 # os.environ['PT_HPU_ENABLE_REFINE_DYNAMIC_SHAPES'] = '1'
 # os.environ['LOG_LEVEL_ALL'] = '3'
