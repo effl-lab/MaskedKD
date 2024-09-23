@@ -60,7 +60,7 @@ if __name__ == "__main__":
         help="Whether to print the classification results.",
     )
     parser.add_argument(
-        "--student_model,
+        "--student_model",
         action="store_true",
     )
     parser.add_argument(
