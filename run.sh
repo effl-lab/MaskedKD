@@ -58,6 +58,7 @@ python3 run_timm_example.py \
     --n_iterations 100 \
     --use_hpu_graphs \
     --bf16 \
+    --student_model \
     --print_result | tee -a run_timm_example.txt
 
 

@@ -97,9 +97,6 @@ if __name__ == "__main__":
     with torch.no_grad(), autocast:
         for i in range(args.warmup):
             inputs = transforms(img).unsqueeze(0).to("hpu")
-            if agrs.teacher_model:
-                outputs = model(inputs, )
-
             outputs = model(inputs)
             torch.hpu.synchronize()
             # print(outputs.shape)
