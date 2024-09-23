@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
     adapt_transformers_to_gaudi()
 
-    if arsg.student_model :
+    if args.student_model :
         model = models_student.deit_tiny_patch16_224()
     elif args.teacher_model :
         model = models_teacher.deit_tiny_patch16_224()
