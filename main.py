@@ -14,6 +14,7 @@ from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
 from timm.scheduler import create_scheduler
 from timm.optim import create_optimizer
 from timm.utils import get_state_dict, ModelEma
+import torch.distributed
 
 from gaudi_utils.timm_cuda import NativeScaler
 
@@ -41,13 +42,9 @@ from transformers import (
     AutoModelForImageClassification,
     HfArgumentParser,
 )
+from vit_utils.scheduler import WarmupLinearSchedule, WarmupCosineSchedule
 import timm
 import os
-os.environ['PT_HPU_LAZY_MODE'] = '1'
-# os.environ['LOG_LEVEL_PT_FALLBACK'] = '1'
-# os.environ['PT_HPU_ENABLE_REFINE_DYNAMIC_SHAPES'] = '1'
-# os.environ['LOG_LEVEL_ALL'] = '3'
-# os.environ['ENABLE_CONSOLE'] = 'true'
 
 def get_args_parser():
     parser = argparse.ArgumentParser('The Role of Masking for Supervised ViT Distillation training and evaluation script', add_help=False)
@@ -103,7 +100,7 @@ def get_args_parser():
 
     parser.add_argument('--decay-epochs', type=float, default=30, metavar='N',
                         help='epoch interval to decay LR')
-    parser.add_argument('--warmup-epochs', type=int, default=5, metavar='N',
+    parser.add_argument('--warmup_epochs', type=int, default=5, metavar='N',
                         help='epochs to warmup LR, if scheduler supports')
     parser.add_argument('--cooldown-epochs', type=int, default=10, metavar='N',
                         help='epochs to cooldown LR at min_lr, after cyclic schedule ends')
@@ -170,8 +167,8 @@ def get_args_parser():
 
     parser.add_argument('--output_dir', default='',
                         help='path where to save, empty for no saving')
-    parser.add_argument('--device', default='hpu',
-                        help='device to use for training / testing')
+    # parser.add_argument('--device', default='hpu',
+    #                     help='device to use for training / testing')
     parser.add_argument('--seed', default=0, type=int)
     parser.add_argument('--resume', default='', help='resume from checkpoint')
     parser.add_argument('--start_epoch', default=0, type=int, metavar='N',
@@ -194,16 +191,68 @@ def get_args_parser():
     parser.add_argument('--no_distill', action='store_true')
     parser.add_argument('--hf_model', action='store_true')
     parser.add_argument('--is_autocast', action='store_true')
+    parser.add_argument('--run_lazy_mode', action='store_true')
+    parser.add_argument("--local_rank", type=int, default=-1,
+                    help="local_rank for distributed training on gpus")
+    parser.add_argument('--use_hpu', action='store_true')
+
     return parser
 
 
-def main(args):
-    print("distributed : ", args.distributed)
-    if args.distributed:
-        utils.init_distributed_mode(args)
+# def init_distributed_mode(args):
+#     world_size = 0
 
+#     from habana_frameworks.torch.distributed.hccl import initialize_distributed_hpu
+#     world_size, rank, args.local_rank = initialize_distributed_hpu()
+#     print('| distributed init (rank {})'.format(args.local_rank), flush=True)
+
+#     process_per_node = 8 #make this configurable for multi-hls using args
+#     if world_size  > 1:
+#         # extend the default HCL timeout
+#         os.environ["MAX_WAIT_ATTEMPTS"] = "50"
+#         torch.distributed.init_process_group('hccl', rank=rank, world_size=world_size)
+#     else:
+#         print("single card run ")
+
+def main(args):
     print(args)
-    device = torch.device(args.device)
+    if not args.use_hpu :
+        print("**************  setting device to be CPU !")
+        device = torch.device("cpu")
+    else:
+        print("**************  setting device to be HPU !")
+        device = torch.device("hpu")
+
+    args.n_gpu = 0
+    args.device = device
+
+    # print("distributed : ", args.distributed)
+    # if args.distributed:
+    #     utils.init_distributed_mode(args)
+
+    if args.use_hpu:
+        world_size = 0
+        from habana_frameworks.torch.distributed.hccl import initialize_distributed_hpu
+        world_size, rank, args.local_rank = initialize_distributed_hpu()
+        print('| distributed init (rank {})'.format(args.local_rank), flush=True)
+
+        process_per_node = 8 #make this configurable for multi-hls using args
+        if world_size  > 1:
+            # extend the default HCL timeout
+            os.environ["MAX_WAIT_ATTEMPTS"] = "50"
+            torch.distributed.init_process_group('hccl', rank=rank, world_size=world_size)
+        else:
+            print("single card run ")
+
+    if args.run_lazy_mode:
+        os.environ['PT_HPU_LAZY_MODE'] = '1'
+        # os.environ['LOG_LEVEL_PT_FALLBACK'] = '1'
+        # os.environ['PT_HPU_ENABLE_REFINE_DYNAMIC_SHAPES'] = '1'
+        # os.environ['LOG_LEVEL_ALL'] = '3'
+        # os.environ['ENABLE_CONSOLE'] = 'true'
+
+    # device = torch.device(args.device)
+
     adapt_transformers_to_gaudi()
 
     # fix the seed for reproducibility
@@ -217,9 +266,11 @@ def main(args):
     dataset_train, args.nb_classes = build_dataset(is_train=True, args=args)
     dataset_val, _ = build_dataset(is_train=False, args=args)
 
-    if args.distributed:
-        num_tasks = utils.get_world_size()
-        global_rank = utils.get_rank()
+    if True: # args.distributed:
+        # num_tasks = utils.get_world_size()
+        # global_rank = utils.get_rank()
+        num_tasks = world_size
+        global_rank = rank
         if args.repeated_aug:
             sampler_train = RASampler(
                 dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True
@@ -289,14 +340,14 @@ def main(args):
             # ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
         )
     else :
-        # model = models_student.__dict__[args.model](
-        #     num_classes=args.nb_classes,
-        #     drop_rate=args.drop,
-        #     drop_path_rate=args.drop_path
-        #     )  
+        model = models_student.__dict__[args.model](
+            num_classes=args.nb_classes,
+            drop_rate=args.drop,
+            drop_path_rate=args.drop_path
+            )  
         # model = wrap_in_hpu_graph(model)  
         # import ipdb; ipdb.set_trace()
-        model = timm.create_model("timm/fastvit_t8.apple_in1k", pretrained=False)
+        # model = timm.create_model("timm/fastvit_t8.apple_in1k", pretrained=False)
         # model = timm.create_model(args.model, pretrained=True)
         # model = timm.create_model('vit_small_patch16_224', pretrained=False)
         # model = ht.hpu.wrap_in_hpu_graph(model)
@@ -304,8 +355,11 @@ def main(args):
     model = model.to(device)
     
     model_without_ddp = model
-    if args.distributed:
-        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
+    # if args.distributed:
+    #     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
+    #     model_without_ddp = model.module
+    if args.local_rank != -1:
+        model = torch.nn.parallel.DistributedDataParallel(model, broadcast_buffers=False, gradient_as_bucket_view=False)
         model_without_ddp = model.module
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print('number of params:', n_parameters)
@@ -324,6 +378,8 @@ def main(args):
     if (str(args.device) == 'hpu' and args.run_lazy_mode):
         # use fused SGD for better performance
         from habana_frameworks.torch.hpex.optimizers import FusedSGD
+        # from habana_frameworks.torch.hpex.optimizers import FusedAdamW
+        # optimizer = FusedAdamW(model.parameters(), lr=args.lr)
         optimizer = FusedSGD(model.parameters(),
                                 lr=args.lr,
                                 momentum=0.9,
@@ -334,11 +390,10 @@ def main(args):
                                 momentum=0.9,
                                 weight_decay=args.weight_decay)
         
-    t_total = args.num_steps
-    if args.decay_type == "cosine":
-        scheduler = WarmupCosineSchedule(optimizer, warmup_steps=args.warmup_steps, t_total=t_total)
+    if args.sched == "cosine":
+        lr_scheduler = WarmupCosineSchedule(optimizer, warmup_steps=args.warmup_epochs, t_total=args.epochs )
     else:
-        scheduler = WarmupLinearSchedule(optimizer, warmup_steps=args.warmup_steps, t_total=t_total)
+        lr_scheduler = WarmupLinearSchedule(optimizer, warmup_steps=args.warmup_epochs * 1251, t_total=args.epochs )
 
     if mixup_active:
         # smoothing is handled with mixup label transform
@@ -408,7 +463,7 @@ def main(args):
             args = args,
         )
 
-        lr_scheduler.step(epoch)
+        lr_scheduler.step()
         if args.output_dir:
             checkpoint_paths = [output_dir / 'checkpoint.pth']
             for checkpoint_path in checkpoint_paths:

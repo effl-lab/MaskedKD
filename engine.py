@@ -47,24 +47,41 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
                 outputs = outputs.logits
             loss  = criterion(samples, outputs, targets, attn)
 
+        if (str(args.device) == 'hpu') and args.run_lazy_mode:
+            htcore.mark_step()
+        loss.backward()
+
+        if (str(args.device) == 'hpu') and args.run_lazy_mode:
+            htcore.mark_step()
+
         print("output: " , outputs.shape, outputs.device)
         print("loss: " , loss.shape, loss.device)
         loss_value = loss.item()
+
+        torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+        if (str(args.device) == 'hpu'):
+            optimizer.step()
+            if args.run_lazy_mode:
+                htcore.mark_step()
+        else:
+            optimizer.step()
+        optimizer.zero_grad()
+
 
         # if not math.isfinite(loss_value):
         #     print("Loss is {}, stopping training".format(loss_value))
         #     sys.exit(1)
 
-        optimizer.zero_grad()
+        # optimizer.zero_grad()
 
         # # this attribute is added by timm on one optimizer (adahessian)
         # is_second_order = hasattr(optimizer, 'is_second_order') and optimizer.is_second_order
         # loss_scaler(loss, optimizer, clip_grad=max_norm,
         #             parameters=model.parameters(), create_graph=is_second_order)
-        loss.backward()
-        htcore.mark_step()
-        optimizer.step()
-        htcore.mark_step()
+        # loss.backward()
+        # htcore.mark_step()
+        # optimizer.step()
+        # htcore.mark_step()
 
         # torch.cuda.synchronize()
 
