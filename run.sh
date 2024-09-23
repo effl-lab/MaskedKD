@@ -1,11 +1,11 @@
 mpirun -n 4 --bind-to core --map-by socket:PE=6 --rank-by core --report-bindings --allow-run-as-root \
 --no_distill  --is_autocast --use_hpu --run_lazy_mode \
---model google/vit-base-patch16-224-in21k  --teacher_model deit3_small --epochs 1 \
+--model google/vit-base-patch16-224-in21k  --teacher_model deit3_small --epochs 2 \
 --batch-size 256 --data-path ../imagenet --distillation-type soft \
 --distillation-alpha 0.5 --distillation-tau 1  --input-size 224 --len_num_keep 98 \
 --output_dir ./results | tee -a log_test.txt
 
-$PYTHON -u train.py --name imagenet1k_TF --dataset imagenet1K --data_path /data/pytorch/imagenet/ILSVRC2012 --model_type ViT-B_16 --pretrained_dir ./ViT-B_16.npz --num_steps 20000 --eval_every 1000 --train_batch_size 64 --gradient_accumulation_steps 2 --img_size 384 --learning_rate 0.06 --autocast
+# $PYTHON -u train.py --name imagenet1k_TF --dataset imagenet1K --data_path /data/pytorch/imagenet/ILSVRC2012 --model_type ViT-B_16 --pretrained_dir ./ViT-B_16.npz --num_steps 20000 --eval_every 1000 --train_batch_size 64 --gradient_accumulation_steps 2 --img_size 384 --learning_rate 0.06 --autocast
 
 # python -m torch.distributed.launch --nproc_per_node=4 --use_env main.py \
 # --no_distill --hf_model \
