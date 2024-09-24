@@ -16,7 +16,7 @@ from timm.optim import create_optimizer
 from timm.utils import get_state_dict, ModelEma
 import torch.distributed
 
-from gaudi_utils.timm_cuda import NativeScaler
+from gaudi_utils.timm_scaler_gaudi import NativeScaler
 
 from datasets_my import build_dataset
 from engine import train_one_epoch, evaluate
@@ -32,7 +32,7 @@ import habana_frameworks.torch.gpu_migration
 import habana_frameworks.torch.core as htcore
 
 from optimum.habana.transformers.modeling_utils import adapt_transformers_to_gaudi
-# from habana_frameworks.torch.hpu import wrap_in_hpu_graph
+from habana_frameworks.torch.hpu import wrap_in_hpu_graph
 import vision_transformer_student
 import habana_frameworks.torch as ht
 from transformers import (
@@ -167,8 +167,8 @@ def get_args_parser():
 
     parser.add_argument('--output_dir', default='',
                         help='path where to save, empty for no saving')
-    # parser.add_argument('--device', default='hpu',
-    #                     help='device to use for training / testing')
+    parser.add_argument('--device', default='hpu',
+                        help='device to use for training / testing')
     parser.add_argument('--seed', default=0, type=int)
     parser.add_argument('--resume', default='', help='resume from checkpoint')
     parser.add_argument('--start_epoch', default=0, type=int, metavar='N',
@@ -189,7 +189,6 @@ def get_args_parser():
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
     parser.add_argument('--no_distributed', action='store_false', dest='distributed', help='')
     parser.add_argument('--no_distill', action='store_true')
-    parser.add_argument('--hf_model', action='store_true')
     parser.add_argument('--is_autocast', action='store_true')
     parser.add_argument('--run_lazy_mode', action='store_true')
     parser.add_argument("--local_rank", type=int, default=-1,
@@ -197,22 +196,6 @@ def get_args_parser():
     parser.add_argument('--use_hpu', action='store_true')
 
     return parser
-
-
-# def init_distributed_mode(args):
-#     world_size = 0
-
-#     from habana_frameworks.torch.distributed.hccl import initialize_distributed_hpu
-#     world_size, rank, args.local_rank = initialize_distributed_hpu()
-#     print('| distributed init (rank {})'.format(args.local_rank), flush=True)
-
-#     process_per_node = 8 #make this configurable for multi-hls using args
-#     if world_size  > 1:
-#         # extend the default HCL timeout
-#         os.environ["MAX_WAIT_ATTEMPTS"] = "50"
-#         torch.distributed.init_process_group('hccl', rank=rank, world_size=world_size)
-#     else:
-#         print("single card run ")
 
 def main(args):
     print(args)
@@ -225,10 +208,6 @@ def main(args):
 
     args.n_gpu = 0
     args.device = device
-
-    # print("distributed : ", args.distributed)
-    # if args.distributed:
-    #     utils.init_distributed_mode(args)
 
     if args.use_hpu:
         world_size = 0
@@ -251,8 +230,6 @@ def main(args):
         # os.environ['LOG_LEVEL_ALL'] = '3'
         # os.environ['ENABLE_CONSOLE'] = 'true'
 
-    # device = torch.device(args.device)
-
     adapt_transformers_to_gaudi()
 
     # fix the seed for reproducibility
@@ -267,8 +244,6 @@ def main(args):
     dataset_val, _ = build_dataset(is_train=False, args=args)
 
     if True: # args.distributed:
-        # num_tasks = utils.get_world_size()
-        # global_rank = utils.get_rank()
         num_tasks = world_size
         global_rank = rank
         if args.repeated_aug:
@@ -317,47 +292,15 @@ def main(args):
             label_smoothing=args.smoothing, num_classes=args.nb_classes)
 
     print(f"Creating model: {args.model}")
-    if args.hf_model:
-        config = AutoConfig.from_pretrained(
-            args.model,
-            num_labels=1000,
-            # label2id=label2id,
-            # id2label=id2label,
-            finetuning_task="image-classification",
-            # cache_dir=model_args.cache_dir,
-            # revision=model_args.model_revision,
-            # token=model_args.token,
-            trust_remote_code=True,
+    model = models_student.__dict__[args.model](
+        num_classes=args.nb_classes,
+        drop_rate=args.drop,
+        drop_path_rate=args.drop_path
         )
-        model = AutoModelForImageClassification.from_pretrained(
-            args.model,
-            # from_tf=bool(".ckpt" in model_args.model_name_or_path),
-            config=config,
-            # cache_dir=model_args.cache_dir,
-            # revision=model_args.model_revision,
-            # token=model_args.token,
-            trust_remote_code=True,
-            # ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
-        )
-    else :
-        model = models_student.__dict__[args.model](
-            num_classes=args.nb_classes,
-            drop_rate=args.drop,
-            drop_path_rate=args.drop_path
-            )  
-        # model = wrap_in_hpu_graph(model)  
-        # import ipdb; ipdb.set_trace()
-        # model = timm.create_model("timm/fastvit_t8.apple_in1k", pretrained=False)
-        # model = timm.create_model(args.model, pretrained=True)
-        # model = timm.create_model('vit_small_patch16_224', pretrained=False)
-        # model = ht.hpu.wrap_in_hpu_graph(model)
         
     model = model.to(device)
     
     model_without_ddp = model
-    # if args.distributed:
-    #     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
-    #     model_without_ddp = model.module
     if args.local_rank != -1:
         model = torch.nn.parallel.DistributedDataParallel(model, broadcast_buffers=False, gradient_as_bucket_view=False)
         model_without_ddp = model.module
@@ -367,23 +310,18 @@ def main(args):
         linear_scaled_lr = args.lr * args.batch_size * utils.get_world_size() / 512.0
         args.lr = linear_scaled_lr
 
-    # optimizer = create_optimizer(args, model_without_ddp)
     loss_scaler = NativeScaler()
 
-    # lr_scheduler, _ = create_scheduler(args, optimizer)
-
-    # criterion = LabelSmoothingCrossEntropy()
-
-        # Prepare optimizer and scheduler
+    # Prepare optimizer and scheduler
     if (str(args.device) == 'hpu' and args.run_lazy_mode):
         # use fused SGD for better performance
-        from habana_frameworks.torch.hpex.optimizers import FusedSGD
-        # from habana_frameworks.torch.hpex.optimizers import FusedAdamW
-        # optimizer = FusedAdamW(model.parameters(), lr=args.lr)
-        optimizer = FusedSGD(model.parameters(),
-                                lr=args.lr,
-                                momentum=0.9,
-                                weight_decay=args.weight_decay)
+        # from habana_frameworks.torch.hpex.optimizers import FusedSGD
+        from habana_frameworks.torch.hpex.optimizers import FusedAdamW
+        optimizer = FusedAdamW(model.parameters(), lr=args.lr)
+        # optimizer = FusedSGD(model.parameters(),
+        #                         lr=args.lr,
+        #                         momentum=0.9,
+        #                         weight_decay=args.weight_decay)
     else:
         optimizer = torch.optim.SGD(model.parameters(),
                                 lr=args.lr,
@@ -454,7 +392,6 @@ def main(args):
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
             data_loader_train.sampler.set_epoch(epoch)
-        # import ipdb; ipdb.set_trace()
         train_stats = train_one_epoch(
             model, criterion, data_loader_train,
             optimizer, device, epoch, loss_scaler,

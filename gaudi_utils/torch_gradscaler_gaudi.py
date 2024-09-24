@@ -11,7 +11,7 @@ import habana_frameworks.torch.gpu_migration
 import habana_frameworks.torch.core as htcore
 
 def amp_definitely_not_available():
-    # return not (torch.cuda.is_available() or find_spec('torch_xla') or find_spec('hpu'))
+    return not (torch.cuda.is_available() or find_spec('torch_xla') or find_spec('hpu'))
     return False
 
 __all__ = ["OptState", "GradScaler"]
@@ -21,7 +21,7 @@ class _MultiDeviceReplicator(object):
     Lazily serves copies of a tensor to requested devices.  Copies are cached per-device.
     """
     def __init__(self, master_tensor: torch.Tensor) -> None:
-        # assert master_tensor.is_cuda or master_tensor.device.type == 'xla' # or master_tensor.device.type == 'hpu' 안됨
+        assert master_tensor.is_cuda or master_tensor.device.type == 'xla' or master_tensor.device.type == 'hpu'
         self.master = master_tensor
         self._per_device_tensors: Dict[torch.device, torch.Tensor] = {}
 

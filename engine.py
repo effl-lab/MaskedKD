@@ -34,10 +34,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
 
         if mixup_fn is not None:
             samples, targets = mixup_fn(samples, targets)
-                                
-        # with torch.cuda.amp.autocast():
-        # import ipdb; ipdb.set_trace()
-        # with torch.autocast(device_type="hpu"):
+
         with torch.autocast(device_type="hpu", dtype=torch.bfloat16, enabled=args.is_autocast):
             outputs = model(samples)    
             attn = None 
@@ -67,24 +64,6 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
             optimizer.step()
         optimizer.zero_grad()
 
-
-        # if not math.isfinite(loss_value):
-        #     print("Loss is {}, stopping training".format(loss_value))
-        #     sys.exit(1)
-
-        # optimizer.zero_grad()
-
-        # # this attribute is added by timm on one optimizer (adahessian)
-        # is_second_order = hasattr(optimizer, 'is_second_order') and optimizer.is_second_order
-        # loss_scaler(loss, optimizer, clip_grad=max_norm,
-        #             parameters=model.parameters(), create_graph=is_second_order)
-        # loss.backward()
-        # htcore.mark_step()
-        # optimizer.step()
-        # htcore.mark_step()
-
-        # torch.cuda.synchronize()
-
         metric_logger.update(loss=loss_value)
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
     # gather the stats from all processes
@@ -106,10 +85,7 @@ def evaluate(data_loader, model, device, args):
     for images, target in metric_logger.log_every(data_loader, 10, header):
         images = images.to(device, non_blocking=True)
         target = target.to(device, non_blocking=True)
-
-        # compute output
-        # with torch.cuda.amp.autocast():
-        # with torch.autocast(device_type="hpu"):
+        
         with torch.autocast(device_type="hpu", dtype=torch.bfloat16, enabled=args.is_autocast):
             output = model(images)    
             if isinstance(output, tuple):
