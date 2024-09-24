@@ -58,7 +58,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
         print("loss: " , loss.shape, loss.device)
         loss_value = loss.item()
 
-        torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         if (str(args.device) == 'hpu'):
             optimizer.step()
             if args.run_lazy_mode:
