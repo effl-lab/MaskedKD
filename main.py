@@ -233,7 +233,7 @@ def main(args):
     adapt_transformers_to_gaudi()
 
     # fix the seed for reproducibility
-    seed = args.seed + utils.get_rank()
+    seed = args.seed
     torch.manual_seed(seed)
     np.random.seed(seed)
     # random.seed(seed)
