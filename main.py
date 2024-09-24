@@ -368,7 +368,7 @@ def main(args):
         args.lr = linear_scaled_lr
 
     # optimizer = create_optimizer(args, model_without_ddp)
-    # loss_scaler = NativeScaler()
+    loss_scaler = NativeScaler()
 
     # lr_scheduler, _ = create_scheduler(args, optimizer)
 
