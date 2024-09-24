@@ -1,6 +1,7 @@
 mpirun -n 4 --bind-to core --map-by socket:PE=6 --rank-by core --report-bindings --allow-run-as-root \
+python -u main.py \
 --no_distill  --is_autocast --use_hpu --run_lazy_mode \
---model google/vit-base-patch16-224-in21k  --teacher_model deit3_small --epochs 2 \
+--model deit_tiny_patch16_224 --teacher_model deit3_small --epochs 2 \
 --batch-size 256 --data-path ../imagenet --distillation-type soft \
 --distillation-alpha 0.5 --distillation-tau 1  --input-size 224 --len_num_keep 98 \
 --output_dir ./results | tee -a log_.txt

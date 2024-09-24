@@ -370,7 +370,7 @@ def main(args):
     # optimizer = create_optimizer(args, model_without_ddp)
     # loss_scaler = NativeScaler()
 
-    lr_scheduler, _ = create_scheduler(args, optimizer)
+    # lr_scheduler, _ = create_scheduler(args, optimizer)
 
     # criterion = LabelSmoothingCrossEntropy()
 
