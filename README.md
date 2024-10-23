@@ -53,15 +53,6 @@ python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py \
 --output_dir /path/to/output_dir/
 ```
 
-## Result
-
-|| Teacher  | Student   | Acc@1 |  log                        |
-|--------| -------- | --------- | ----- | ----------------------------|
-|Logit| DeiT3-Small | DeiT-Tiny | 75.0  | [log](./logs/logit.txt) |
-|+MaskedKD<sub>(50%)</sub>| DeiT3-Small | DeiT-Tiny | 75.1  | [log](./logs/maskeded50%.txt) |
-
-
-
 ## Acknowledgment
 
 This repo is based on [DeiT](https://github.com/facebookresearch/deit), [MAE](https://github.com/facebookresearch/mae) and [pytorch-image-models](https://github.com/rwightman/pytorch-image-models).
