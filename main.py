@@ -1,3 +1,5 @@
+# Copyright (c) 2015-present, Facebook, Inc.
+# All rights reserved.
 import argparse
 import datetime
 import numpy as np
@@ -21,14 +23,15 @@ from losses import DistillationLoss
 from samplers import RASampler
 import utils
 import models_student
-from models_teacher import deit_small_patch16_224, deit_base_patch16_224
-from deit3 import deit_small_patch16_LS, deit_base_patch16_LS, deit_large_patch16_LS
-
+import deit3
+from cait import cait_S24_224
+import models_teacher
+import models_student_reg
 
 def get_args_parser():
-    parser = argparse.ArgumentParser('The Role of Masking for Supervised ViT Distillation training and evaluation script', add_help=False)
-    parser.add_argument('--teacher_model', default='deit3_small', type=str, metavar='MODEL',
-                        help='Name of teacher model to train (default: "deit3_small"')
+    parser = argparse.ArgumentParser('DeiT training and evaluation script', add_help=False)
+    parser.add_argument('--teacher_model', default='regnety_160', type=str, metavar='MODEL',
+                        help='Name of teacher model to train (default: "regnety_160"')
     parser.add_argument('--distillation-type', default='soft', choices=['none', 'soft', 'hard'], type=str, help="")
     parser.add_argument('--distillation-alpha', default=0.5, type=float, help="")
     parser.add_argument('--distillation-tau', default=1.0, type=float, help="")
@@ -37,6 +40,7 @@ def get_args_parser():
     parser.add_argument('--epochs', default=300, type=int)
     parser.add_argument('--unscale-lr', action='store_true')
     parser.add_argument('--len_num_keep', default=196, type=int, help='teacher images input size')
+    parser.add_argument('--maskedkd', action='store_true')
 
     # Model parameters
     parser.add_argument('--model', default='deit_base_patch16_224', type=str, metavar='MODEL',
@@ -109,8 +113,8 @@ def get_args_parser():
     parser.add_argument('--src', action='store_true') #simple random crop
     
     # * Random Erase params
-    parser.add_argument('--reprob', type=float, default=0.0, metavar='PCT',
-                        help='Random erase prob (default: 0.0)')
+    parser.add_argument('--reprob', type=float, default=0.25, metavar='PCT',
+                        help='Random erase prob (default: 0.25)')
     parser.add_argument('--remode', type=str, default='pixel',
                         help='Random erase mode (default: "pixel")')
     parser.add_argument('--recount', type=int, default=1,
@@ -131,9 +135,6 @@ def get_args_parser():
                         help='Probability of switching to cutmix when both mixup and cutmix enabled')
     parser.add_argument('--mixup-mode', type=str, default='batch',
                         help='How to apply mixup/cutmix params. Per "batch", "pair", or "elem"')
-
-    # Distillation parameters
-
 
     # Dataset parameters
     parser.add_argument('--data-path', default='/datasets01/imagenet_full_size/061417/', type=str,
@@ -166,8 +167,10 @@ def get_args_parser():
     parser.add_argument('--world_size', default=1, type=int,
                         help='number of distributed processes')
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
+    ## ryu
+    parser.add_argument('--reg_token', action='store_true', default=False, help="Use register token student")
+    parser.add_argument('--num_reg', type=int, default = 4, help="Num register token student")    
     return parser
-
 
 def main(args):
     utils.init_distributed_mode(args)
@@ -235,11 +238,20 @@ def main(args):
             label_smoothing=args.smoothing, num_classes=args.nb_classes)
 
     print(f"Creating model: {args.model}")
-    model = models_student.__dict__[args.model](
-        num_classes=args.nb_classes,
-        drop_rate=args.drop,
-        drop_path_rate=args.drop_path
-        )    
+    ## ryu
+    if args.reg_token:
+        model = models_student_reg.__dict__[args.model](
+            num_classes=args.nb_classes,
+            drop_rate=args.drop,
+            drop_path_rate=args.drop_path,
+            num_reg = args.num_reg
+            )    
+    else :
+        model = models_student.__dict__[args.model](
+            num_classes=args.nb_classes,
+            drop_rate=args.drop,
+            drop_path_rate=args.drop_path
+            )    
             
     model.to(device)
 
@@ -269,16 +281,21 @@ def main(args):
                 
     teacher_model = None
     print(f"Creating teacher model: {args.teacher_model}")
+    # deit_small, deit_base, deit3_small, deit3_base, deit3_large, , caits_24
     if args.teacher_model == "deit_small":
-        teacher_model = deit_small_patch16_224(pretrained=True)
+        teacher_model = models_teacher.deit_small_patch16_224(pretrained=True)    
     elif args.teacher_model == "deit_base":
-        teacher_model = deit_base_patch16_224(pretrained=True)
+        teacher_model = models_teacher.deit_base_patch16_224(pretrained=True)
     elif args.teacher_model == "deit3_small":
-        teacher_model = deit_small_patch16_LS(pretrained=True)
+        teacher_model = deit3.deit_small_patch16_LS(pretrained=True)
     elif args.teacher_model == "deit3_base":
-        teacher_model = deit_base_patch16_LS(pretrained=True)
+        teacher_model = deit3.deit_base_patch16_LS(pretrained=True)
     elif args.teacher_model == "deit3_large":
-        teacher_model = deit_large_patch16_LS(pretrained=True)
+        teacher_model = deit3.deit_large_patch16_LS(pretrained=True)
+    elif args.teacher_model == "deit3_huge":
+        teacher_model = deit3.deit_huge_patch14_LS(pretrained=True)
+    elif args.teacher_model == "caits_24":
+        teacher_model = cait_S24_224(pretrained=True)
     else :
         print("no model")
         return
@@ -287,7 +304,7 @@ def main(args):
     teacher_model.eval()
 
     criterion = DistillationLoss(
-        criterion, teacher_model, args.distillation_type, args.distillation_alpha, args.distillation_tau, args.len_num_keep
+        criterion, teacher_model, args.distillation_type, args.distillation_alpha, args.distillation_tau, args.len_num_keep, args.maskedkd
     )
 
     output_dir = Path(args.output_dir)
@@ -302,11 +319,7 @@ def main(args):
                 loss_scaler.load_state_dict(checkpoint['scaler'])
         lr_scheduler.step(args.start_epoch)
 
-    if args.eval:
-        test_stats = evaluate(data_loader_val, model, device)
-        print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
-        return
-    
+
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
     max_accuracy = 0.0
@@ -324,7 +337,8 @@ def main(args):
 
         lr_scheduler.step(epoch)
         if args.output_dir:
-            checkpoint_paths = [output_dir / 'checkpoint.pth']
+            # epoch_name = str(epoch)
+            checkpoint_paths = [output_dir / ('checkpoint.pth')]
             for checkpoint_path in checkpoint_paths:
                 utils.save_on_master({
                     'model': model_without_ddp.state_dict(),
@@ -336,10 +350,9 @@ def main(args):
                 }, checkpoint_path)
              
 
-        
-        test_stats = evaluate(data_loader_val, model, device)
+        test_stats = evaluate(args, data_loader_val, model, device)
+        # print(train_loss, test_loss, test_acc1)
         print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
-        
         
         if max_accuracy < test_stats["acc1"]:
             max_accuracy = test_stats["acc1"]
@@ -373,7 +386,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser('The Role of Masking for Supervised ViT Distillation training and evaluation script', parents=[get_args_parser()])
+    parser = argparse.ArgumentParser('DeiT training and evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)

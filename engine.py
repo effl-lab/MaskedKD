@@ -1,3 +1,5 @@
+# Copyright (c) 2015-present, Facebook, Inc.
+# All rights reserved.
 """
 Train and eval functions used in main.py
 """
@@ -12,6 +14,8 @@ from timm.utils import accuracy, ModelEma
 
 from losses import DistillationLoss
 import utils
+from pathlib import Path
+import json
 
 
 def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
@@ -24,8 +28,10 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
     header = 'Epoch: [{}]'.format(epoch)
     print_freq = 10
-
+    step = 0
     for samples, targets in metric_logger.log_every(data_loader, print_freq, header):
+        step += 1
+        
         samples = samples.to(device, non_blocking=True)
         targets = targets.to(device, non_blocking=True)
 
@@ -37,7 +43,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
             loss  = criterion(samples, outputs, targets, attn)
 
         loss_value = loss.item()
-
+        # print(loss_value)
         if not math.isfinite(loss_value):
             print("Loss is {}, stopping training".format(loss_value))
             sys.exit(1)
@@ -50,7 +56,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
                     parameters=model.parameters(), create_graph=is_second_order)
 
         torch.cuda.synchronize()
-
+        
         metric_logger.update(loss=loss_value)
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
     # gather the stats from all processes
@@ -60,7 +66,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
 
 
 @torch.no_grad()
-def evaluate(data_loader, model, device):
+def evaluate(args, data_loader, model, device):
     criterion = torch.nn.CrossEntropyLoss()
 
     metric_logger = utils.MetricLogger(delimiter="  ")
@@ -68,8 +74,9 @@ def evaluate(data_loader, model, device):
 
     # switch to evaluation mode
     model.eval()
-
+    step = 0
     for images, target in metric_logger.log_every(data_loader, 10, header):
+        step += 1
         images = images.to(device, non_blocking=True)
         target = target.to(device, non_blocking=True)
 

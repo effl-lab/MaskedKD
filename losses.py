@@ -1,3 +1,5 @@
+# Copyright (c) 2015-present, Facebook, Inc.
+# All rights reserved.
 """
 Implements the knowledge distillation loss
 """
@@ -12,7 +14,7 @@ class DistillationLoss(torch.nn.Module):
     taking a teacher model prediction and using it as additional supervision.
     """
     def __init__(self, base_criterion: torch.nn.Module, teacher_model: torch.nn.Module,
-                 distillation_type: str, alpha: float, tau: float, len_num_keep):
+                 distillation_type: str, alpha: float, tau: float, len_num_keep, maskedkd):
         super().__init__()
         self.base_criterion = base_criterion
         self.teacher_model = teacher_model
@@ -21,14 +23,17 @@ class DistillationLoss(torch.nn.Module):
         self.alpha = alpha
         self.tau = tau
         self.len_num_keep = len_num_keep            
+        self.maskedkd = maskedkd            
+
 
     def forward(self, inputs, outputs, labels, attn):
-
+        
+        
         len_keep = torch.topk(attn.mean(dim=1)[:,0,1:],self.len_num_keep).indices
 
         # don't backprop throught the teacher
         with torch.no_grad():
-            teacher_outputs = self.teacher_model(inputs, len_keep)
+            teacher_outputs = self.teacher_model(inputs, len_keep, self.maskedkd)
 
         base_loss = self.base_criterion(outputs, labels)
 

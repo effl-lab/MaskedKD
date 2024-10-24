@@ -1,3 +1,6 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+
 import torch
 import torch.nn as nn
 from functools import partial
@@ -357,13 +360,30 @@ def deit_large_patch16_LS(pretrained=False, img_size=224, pretrained_21k = False
     
 @register_model
 def deit_huge_patch14_LS(pretrained=False, img_size=224, pretrained_21k = False,  **kwargs):
+    # model = vit_models(
+    #     img_size = img_size, patch_size=14, embed_dim=1280, depth=32, num_heads=16, mlp_ratio=4, qkv_bias=True,
+    #     norm_layer=partial(nn.LayerNorm, eps=1e-6),block_layers = Layer_scale_init_Block, **kwargs)
+    # checkpoint = torch.load('./deit_3_huge_224_1k.pth', map_location='cpu')
+    # # load pre-trained model
+    # msg = model.load_state_dict(checkpoint["model"])
+    # return model
     model = vit_models(
         img_size = img_size, patch_size=14, embed_dim=1280, depth=32, num_heads=16, mlp_ratio=4, qkv_bias=True,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),block_layers = Layer_scale_init_Block, **kwargs)
-    checkpoint = torch.load('./deit_3_huge_224_1k.pth', map_location='cpu')
-    # load pre-trained model
-    msg = model.load_state_dict(checkpoint["model"])
+    if pretrained:
+        name = 'https://dl.fbaipublicfiles.com/deit/deit_3_huge_'+str(img_size)+'_'
+        if pretrained_21k:
+            name+='21k_v1.pth'
+        else:
+            name+='1k.pth'
+            
+        checkpoint = torch.hub.load_state_dict_from_url(
+            url=name,
+            map_location="cpu", check_hash=True
+        )
+        model.load_state_dict(checkpoint["model"])
     return model
+
     
 @register_model
 def deit_huge_patch14_52_LS(pretrained=False, img_size=224, pretrained_21k = False,  **kwargs):
