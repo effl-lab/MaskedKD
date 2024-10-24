@@ -1,3 +1,5 @@
+# Copyright (c) 2015-present, Facebook, Inc.
+# All rights reserved.
 import os
 import json
 
@@ -15,6 +17,7 @@ class INatDataset(ImageFolder):
         self.loader = loader
         self.target_transform = target_transform
         self.year = year
+        # assert category in ['kingdom','phylum','class','order','supercategory','family','genus','name']
         path_json = os.path.join(root, f'{"train" if train else "val"}{year}.json')
         with open(path_json) as json_file:
             data = json.load(json_file)
@@ -47,6 +50,7 @@ class INatDataset(ImageFolder):
             target_current_true = targeter[categors[category]]
             self.samples.append((path_current, target_current_true))
 
+    # __getitem__ and __len__ inherited from ImageFolder
 
 
 def build_dataset(is_train, args):
