@@ -26,7 +26,6 @@ import models_student
 import deit3
 from cait import cait_S24_224
 import models_teacher
-import models_student_reg
 
 def get_args_parser():
     parser = argparse.ArgumentParser('DeiT training and evaluation script', add_help=False)
@@ -167,9 +166,6 @@ def get_args_parser():
     parser.add_argument('--world_size', default=1, type=int,
                         help='number of distributed processes')
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
-    ## ryu
-    parser.add_argument('--reg_token', action='store_true', default=False, help="Use register token student")
-    parser.add_argument('--num_reg', type=int, default = 4, help="Num register token student")    
     return parser
 
 def main(args):
@@ -238,20 +234,12 @@ def main(args):
             label_smoothing=args.smoothing, num_classes=args.nb_classes)
 
     print(f"Creating model: {args.model}")
-    ## ryu
-    if args.reg_token:
-        model = models_student_reg.__dict__[args.model](
-            num_classes=args.nb_classes,
-            drop_rate=args.drop,
-            drop_path_rate=args.drop_path,
-            num_reg = args.num_reg
-            )    
-    else :
-        model = models_student.__dict__[args.model](
-            num_classes=args.nb_classes,
-            drop_rate=args.drop,
-            drop_path_rate=args.drop_path
-            )    
+
+    model = models_student.__dict__[args.model](
+        num_classes=args.nb_classes,
+        drop_rate=args.drop,
+        drop_path_rate=args.drop_path
+        )    
             
     model.to(device)
 
