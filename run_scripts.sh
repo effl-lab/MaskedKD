@@ -4,7 +4,7 @@
 # --distillation-alpha 0.5 --distillation-tau 1  --input-size 224 --maskedkd --len_num_keep 98 \
 # --output_dir ./output_test | tee ./test_log.txt
 
-mpirun -n 4 --bind-to core --map-by socket:PE=6 --rank-by core --report-bindings --allow-run-as-root \
+# mpirun -n 4 --bind-to core --map-by socket:PE=6 --rank-by core --report-bindings --allow-run-as-root \
 python -u main.py \
 --model deit_tiny_patch16_224 --teacher_model deit3_small --epochs 2 \
 --batch-size 256 --data-path ../imagenet --distillation-type soft \
