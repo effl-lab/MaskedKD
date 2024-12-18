@@ -17,6 +17,7 @@ import utils
 from pathlib import Path
 import json
 
+import habana_frameworks.torch.core as htcore
 
 def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,
@@ -38,9 +39,9 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
         if mixup_fn is not None:
             samples, targets = mixup_fn(samples, targets)
                                 
-        with torch.cuda.amp.autocast():
-            outputs, attn = model(samples)            
-            loss  = criterion(samples, outputs, targets, attn)
+        # with torch.cuda.amp.autocast():
+        outputs, attn = model(samples)            
+        loss  = criterion(samples, outputs, targets, attn)
 
         loss_value = loss.item()
         # print(loss_value)
@@ -52,10 +53,17 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
 
         # this attribute is added by timm on one optimizer (adahessian)
         is_second_order = hasattr(optimizer, 'is_second_order') and optimizer.is_second_order
-        loss_scaler(loss, optimizer, clip_grad=max_norm,
-                    parameters=model.parameters(), create_graph=is_second_order)
+        # loss_scaler(loss, optimizer, clip_grad=max_norm,
+        #             parameters=model.parameters(), create_graph=is_second_order)
+        loss.backward(create_graph=is_second_order)
+        htcore.mark_step()  
+        if max_norm is not None:
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
 
-        torch.cuda.synchronize()
+        optimizer.step()  # 파라미터 업데이트
+        htcore.mark_step()  
+        
+        # torch.cuda.synchronize()
         
         metric_logger.update(loss=loss_value)
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
@@ -81,9 +89,9 @@ def evaluate(args, data_loader, model, device):
         target = target.to(device, non_blocking=True)
 
         # compute output
-        with torch.cuda.amp.autocast():
-            output, _ = model(images)
-            loss = criterion(output, target)
+        # with torch.cuda.amp.autocast():
+        output, _ = model(images)
+        loss = criterion(output, target)
 
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
 
