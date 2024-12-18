@@ -33,7 +33,7 @@ class DistillationLoss(torch.nn.Module):
 
         # don't backprop throught the teacher
         with torch.no_grad():
-            teacher_outputs = self.teacher_model(inputs, len_keep, self.maskedkd)
+            teacher_outputs = self.teacher_model(inputs, len_keep)
 
         base_loss = self.base_criterion(outputs, labels)
 
