@@ -1,0 +1,7 @@
+*.pth
+*.npz
+__pycache__/
+wandb/
+ViT/logs/
+ViT/running_logs/
+ViT/output/
